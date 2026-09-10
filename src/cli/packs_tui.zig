@@ -297,10 +297,7 @@ pub fn runBrowse(
 
     try stdout.writeAll(vaxis.ctlseqs.smcup);
     try stdout.writeAll(vaxis.ctlseqs.hide_cursor);
-    defer {
-        stdout.writeAll(vaxis.ctlseqs.show_cursor) catch {};
-        stdout.writeAll(vaxis.ctlseqs.rmcup) catch {};
-    }
+    defer restoreTerminal(stdout, tty.writer());
 
     return try runBrowseLoop(io, allocator, stdout, &tty, saved, input);
 }
@@ -703,6 +700,20 @@ fn flush(stdout: anytype) !void {
     }
 }
 
+/// Flush terminal restore before `tty.deinit()` closes the Windows console handle.
+/// Otherwise buffered alt-screen state can leak back to the shell.
+fn restoreTerminal(stdout: anytype, tty_writer: anytype) void {
+    writeTerminalRestore(stdout) catch {
+        writeTerminalRestore(tty_writer) catch {};
+    };
+}
+
+fn writeTerminalRestore(writer: anytype) !void {
+    try writer.writeAll(vaxis.ctlseqs.show_cursor);
+    try writer.writeAll(vaxis.ctlseqs.rmcup);
+    try flush(writer);
+}
+
 // ── Pure unit tests ─────────────────────────────────────────────────────────
 
 test "packs browse: wouldEnterPacksBrowse gates on TTY and argv escapes" {
@@ -717,6 +728,32 @@ test "packs browse: wouldEnterPacksBrowse gates on TTY and argv escapes" {
     try std.testing.expect(!wouldEnterPacksBrowse(true, true, &.{"--robot"}, false));
     try std.testing.expect(!wouldEnterPacksBrowse(true, true, &.{ "--format", "json" }, false));
     try std.testing.expect(wouldEnterPacksBrowse(true, true, &.{ "--filter", "git" }, false));
+}
+
+test "packs browse: terminal restore leaves alternate screen" {
+    var buf: [128]u8 = undefined;
+    var writer: std.Io.Writer = .fixed(&buf);
+
+    restoreTerminal(&writer, &writer);
+
+    try std.testing.expectEqualStrings(
+        vaxis.ctlseqs.show_cursor ++ vaxis.ctlseqs.rmcup,
+        writer.buffered(),
+    );
+}
+
+test "packs browse: terminal restore falls back after stdout failure" {
+    var failed_buf: [0]u8 = .{};
+    var failed_writer: std.Io.Writer = .fixed(&failed_buf);
+    var fallback_buf: [128]u8 = undefined;
+    var fallback_writer: std.Io.Writer = .fixed(&fallback_buf);
+
+    restoreTerminal(&failed_writer, &fallback_writer);
+
+    try std.testing.expectEqualStrings(
+        vaxis.ctlseqs.show_cursor ++ vaxis.ctlseqs.rmcup,
+        fallback_writer.buffered(),
+    );
 }
 
 test "packs browse: enabled-only filter excludes disabled opt-in" {
