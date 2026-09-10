@@ -32,8 +32,18 @@ Run Claude Code, Codex, Pi, OpenCode, Hermes, OpenClaw, or Grok through one loca
 
 ## Install
 
+macOS and Linux:
+
 ```sh
 curl -fsSL https://rykanv.com/install | sh
+```
+
+Windows PowerShell:
+
+```powershell
+$installer = Join-Path $env:TEMP "ryk-install.ps1"
+irm https://raw.githubusercontent.com/christopherkarani/ryk/main/scripts/install.ps1 -OutFile $installer
+& $installer -Version (irm https://raw.githubusercontent.com/christopherkarani/ryk/main/VERSION).Trim()
 ```
 
 Latest is [v0.2.21](https://github.com/christopherkarani/ryk/releases/tag/v0.2.21). Pin with `RYK_VERSION=0.2.21`.

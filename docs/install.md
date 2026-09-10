@@ -1,15 +1,23 @@
 # Install
 
-## Recommended: curl installer
+## Recommended installers
+
+macOS and Linux:
 
 ```sh
 curl -fsSL https://rykanv.com/install | sh
 ```
 
-This is the working public install path on macOS and Linux. ryk is
-macOS/Linux-first. Windows can run the CLI, but sessions there have no OS
-sandbox and stay at wrapper/hook grade — see [Windows Notes](#windows-notes)
-and the [compatibility matrix](compatibility.md).
+Windows PowerShell:
+
+```powershell
+$installer = Join-Path $env:TEMP "ryk-install.ps1"
+irm https://raw.githubusercontent.com/christopherkarani/ryk/main/scripts/install.ps1 -OutFile $installer
+& $installer -Version (irm https://raw.githubusercontent.com/christopherkarani/ryk/main/VERSION).Trim()
+```
+
+Windows has no OS sandbox; see [Windows Notes](#windows-notes) and the
+[compatibility matrix](compatibility.md).
 
 npm, WinGet, and Scoop are not published — see
 [`packaging/README.md`](../packaging/README.md).

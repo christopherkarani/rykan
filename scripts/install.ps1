@@ -225,7 +225,7 @@ function Ensure-ResourceRootEntry($TargetRoot) {
         New-Item -ItemType Directory -Force -Path $profileDir | Out-Null
     }
 
-    if ((Test-Path -LiteralPath $profilePath) -and (Select-String -LiteralPath $profilePath -Pattern [regex]::Escape($marker) -Quiet)) {
+    if ((Test-Path -LiteralPath $profilePath) -and (Select-String -LiteralPath $profilePath -Pattern ([regex]::Escape($marker)) -Quiet)) {
         $lines = Get-Content -LiteralPath $profilePath
         $updated = New-Object System.Collections.Generic.List[string]
         $skipNextResourceRoot = $false
